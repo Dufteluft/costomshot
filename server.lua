@@ -37,7 +37,6 @@ RegisterCommand('spawnnpc', function(source, args, rawCommand)
     -- Create the NPC
     local npc = CreatePed(4, `mp_m_freemode_01`, coords.x, coords.y, coords.z, heading, true, true)
     npcNetId = NetworkGetNetworkIdFromEntity(npc)
-    SetEntityAsMissionEntity(npc, true, true)
     SetNetworkIdExistsOnAllMachines(npcNetId, true)
     NetworkSetFriendlyFireOption(true)
     SetCanAttackFriendly(npc, true, true)
