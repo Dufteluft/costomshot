@@ -10,6 +10,7 @@ AddEventHandler('spawnNpcPlayer', function(npcNetId)
         Citizen.Wait(1)
     end
     SetEntityAsMissionEntity(npc, true, true)
+    NetworkSetFriendlyFireOption(true)
     SetPedSeeingRange(npc, 0.0)
     SetPedHearingRange(npc, 0.0)
     SetEntityInvincible(npc, true)
