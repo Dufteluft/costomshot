@@ -34,21 +34,17 @@ RegisterCommand('spawnnpc', function(source, args, rawCommand)
     local coords = GetEntityCoords(playerPed)
     local heading = GetEntityHeading(playerPed)
 
-    -- Request the NPC model
-    RequestModel(Config.NpcModel)
-    while not HasModelLoaded(Config.NpcModel) do
-        Wait(1)
-    end
-
     -- Create the NPC
-    local npc = CreatePed(4, Config.NpcModel, coords.x, coords.y, coords.z, heading, true, true)
+    local npc = CreatePed(4, `mp_m_freemode_01`, coords.x, coords.y, coords.z, heading, true, true)
     npcNetId = NetworkGetNetworkIdFromEntity(npc)
     SetEntityAsMissionEntity(npc, true, true)
     SetNetworkIdExistsOnAllMachines(npcNetId, true)
     NetworkSetFriendlyFireOption(true)
     SetCanAttackFriendly(npc, true, true)
-    SetEntityHealth(npc, Config.NpcHealth)
+    SetEntityHealth(npc, 100)
     SetPedCanRagdoll(npc, false)
+
+    TriggerClientEvent('spawnNpcPlayer', -1, npcNetId)
 
     TriggerClientEvent('chat:addMessage', -1, {
         color = { 0, 255, 0 },
