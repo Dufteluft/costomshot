@@ -1,27 +1,51 @@
+ESX = nil
+TriggerEvent('esx:getSharedObject', function(obj) ESX = obj end)
+
 local npc = nil
 local showHitbox = false
 local hitboxSize = 0.1
 
-RegisterCommand('sethitboxsize', function(source, args, rawCommand)
-    local size = tonumber(args[1])
-    if size then
-        hitboxSize = size
-        TriggerEvent('chat:addMessage', {
-            color = { 0, 255, 0 },
-            multiline = true,
-            args = { 'Hitbox-Größe auf ' .. size .. ' gesetzt.' }
-        })
-    else
-        TriggerEvent('chat:addMessage', {
-            color = { 255, 0, 0 },
-            multiline = true,
-            args = { 'Ungültige Größe.' }
-        })
-    end
+RegisterCommand('hitboxmenu', function()
+    lib.registerMenu({
+        id = 'hitbox_menu',
+        title = 'Hitbox-Konfiguration',
+        options = {
+            {
+                title = 'Hitbox-Größe ändern',
+                description = 'Ändere die Größe der Hitboxen.',
+                action = function()
+                    local input = lib.inputDialog('Hitbox-Größe', {'Größe (z.B. 0.1)'})
+                    if input then
+                        local size = tonumber(input[1])
+                        if size then
+                            hitboxSize = size
+                            lib.notify({
+                                title = 'Hitbox-Größe',
+                                description = 'Größe auf ' .. size .. ' gesetzt.',
+                                type = 'success'
+                            })
+                        else
+                            lib.notify({
+                                title = 'Hitbox-Größe',
+                                description = 'Ungültige Größe.',
+                                type = 'error'
+                            })
+                        end
+                    end
+                end
+            }
+        }
+    })
+    lib.showMenu('hitbox_menu')
 end, false)
 
 RegisterNetEvent('spawnNpcPlayer')
 AddEventHandler('spawnNpcPlayer', function(npcNetId)
+    lib.progressBar({
+        duration = 2000,
+        label = 'Spawne NPC...',
+        canCancel = false,
+    })
     npc = NetToPed(npcNetId)
     SetNetworkIdExistsOnAllMachines(npcNetId, true)
     RequestModel(GetHashKey("mp_m_freemode_01"))
@@ -42,16 +66,16 @@ end)
 RegisterCommand('hitbox', function()
     showHitbox = not showHitbox
     if showHitbox then
-        TriggerEvent('chat:addMessage', {
-            color = { 255, 0, 0 },
-            multiline = true,
-            args = { 'Hitbox-Anzeige aktiviert.' }
+        lib.notify({
+            title = 'Hitbox',
+            description = 'Anzeige aktiviert.',
+            type = 'success'
         })
     else
-        TriggerEvent('chat:addMessage', {
-            color = { 255, 0, 0 },
-            multiline = true,
-            args = { 'Hitbox-Anzeige deaktiviert.' }
+        lib.notify({
+            title = 'Hitbox',
+            description = 'Anzeige deaktiviert.',
+            type = 'error'
         })
     end
 end, false)
@@ -82,25 +106,11 @@ end)
 --================================================================================================
 
 function DrawHitboxes()
-    -- Head
-    local headPos = GetPedBoneCoords(npc, 31086, 0.0, 0.0, 0.0)
-    DrawBox(headPos.x - hitboxSize, headPos.y - hitboxSize, headPos.z - hitboxSize, headPos.x + hitboxSize, headPos.y + hitboxSize, headPos.z + hitboxSize * 2, 255, 0, 0, 150)
-
-    -- Torso
-    local torsoPos = GetPedBoneCoords(npc, 11816, 0.0, 0.0, 0.0)
-    DrawBox(torsoPos.x - (hitboxSize * 2), torsoPos.y - (hitboxSize * 1.5), torsoPos.z - (hitboxSize * 3), torsoPos.x + (hitboxSize * 2), torsoPos.y + (hitboxSize * 1.5), torsoPos.z + (hitboxSize * 3), 0, 255, 0, 150)
-
-    -- Arms
-    local leftArmPos = GetPedBoneCoords(npc, 45509, 0.0, 0.0, 0.0)
-    DrawBox(leftArmPos.x - hitboxSize, leftArmPos.y - hitboxSize, leftArmPos.z - (hitboxSize * 2.5), leftArmPos.x + hitboxSize, leftArmPos.y + hitboxSize, leftArmPos.z + (hitboxSize * 2.5), 0, 0, 255, 150)
-    local rightArmPos = GetPedBoneCoords(npc, 45510, 0.0, 0.0, 0.0)
-    DrawBox(rightArmPos.x - hitboxSize, rightArmPos.y - hitboxSize, rightArmPos.z - (hitboxSize * 2.5), rightArmPos.x + hitboxSize, rightArmPos.y + hitboxSize, rightArmPos.z + (hitboxSize * 2.5), 0, 0, 255, 150)
-
-    -- Legs
-    local leftLegPos = GetPedBoneCoords(npc, 63931, 0.0, 0.0, 0.0)
-    DrawBox(leftLegPos.x - hitboxSize, leftLegPos.y - hitboxSize, leftLegPos.z - (hitboxSize * 3), leftLegPos.x + hitboxSize, leftLegPos.y + hitboxSize, leftLegPos.z + (hitboxSize * 3), 255, 255, 0, 150)
-    local rightLegPos = GetPedBoneCoords(npc, 51826, 0.0, 0.0, 0.0)
-    DrawBox(rightLegPos.x - hitboxSize, rightLegPos.y - hitboxSize, rightLegPos.z - (hitboxSize * 3), rightLegPos.x + hitboxSize, rightLegPos.y + hitboxSize, rightLegPos.z + (hitboxSize * 3), 255, 255, 0, 150)
+    for boneName, boneData in pairs(Config.Bones) do
+        local boneId = boneData.id
+        local bonePos = GetPedBoneCoords(npc, boneId, 0.0, 0.0, 0.0)
+        DrawBox(bonePos.x - hitboxSize, bonePos.y - hitboxSize, bonePos.z - hitboxSize, bonePos.x + hitboxSize, bonePos.y + hitboxSize, bonePos.z + hitboxSize, 255, 0, 0, 150)
+    end
 end
 
 function DrawHealthBar()
@@ -110,87 +120,63 @@ function DrawHealthBar()
 end
 
 function CheckHits()
-    -- Head
-    local shapeTestHead = StartShapeTestCapsule(GetPedBoneCoords(npc, 31086, 0.0, 0.0, 0.0), GetPedBoneCoords(npc, 31086, 0.0, 0.0, 0.2), hitboxSize, 16, npc, 4)
-    local _, hitHead, endCoordsHead, _, _ = GetShapeTestResult(shapeTestHead)
-    if hitHead and endCoordsHead then
-        ApplyDamageToPed(npc, 25, true)
-        LogHit("Head", endCoordsHead)
-    end
+    for boneName, boneData in pairs(Config.Bones) do
+        local boneId = boneData.id
+        local damage = boneData.damage
 
-    -- Torso
-    local shapeTestTorso = StartShapeTestCapsule(GetPedBoneCoords(npc, 11816, 0.0, 0.0, -0.3), GetPedBoneCoords(npc, 11816, 0.0, 0.0, 0.3), hitboxSize * 2, 16, npc, 4)
-    local _, hitTorso, endCoordsTorso, _, _ = GetShapeTestResult(shapeTestTorso)
-    if hitTorso and endCoordsTorso then
-        ApplyDamageToPed(npc, 10, true)
-        LogHit("Torso", endCoordsTorso)
-    end
+        local shapeTest = StartShapeTestCapsule(GetPedBoneCoords(npc, boneId, 0.0, 0.0, -0.1), GetPedBoneCoords(npc, boneId, 0.0, 0.0, 0.1), hitboxSize, 16, npc, 4)
+        local _, hit, endCoords, _, _ = GetShapeTestResult(shapeTest)
 
-    -- Arms
-    local shapeTestLeftArm = StartShapeTestCapsule(GetPedBoneCoords(npc, 45509, 0.0, 0.0, -0.25), GetPedBoneCoords(npc, 45509, 0.0, 0.0, 0.25), hitboxSize, 16, npc, 4)
-    local _, hitLeftArm, endCoordsLeftArm, _, _ = GetShapeTestResult(shapeTestLeftArm)
-    if hitLeftArm and endCoordsLeftArm then
-        ApplyDamageToPed(npc, 5, true)
-        LogHit("Left Arm", endCoordsLeftArm)
-    end
-
-    local shapeTestRightArm = StartShapeTestCapsule(GetPedBoneCoords(npc, 45510, 0.0, 0.0, -0.25), GetPedBoneCoords(npc, 45510, 0.0, 0.0, 0.25), hitboxSize, 16, npc, 4)
-    local _, hitRightArm, endCoordsRightArm, _, _ = GetShapeTestResult(shapeTestRightArm)
-    if hitRightArm and endCoordsRightArm then
-        ApplyDamageToPed(npc, 5, true)
-        LogHit("Right Arm", endCoordsRightArm)
-    end
-
-    -- Legs
-    local shapeTestLeftLeg = StartShapeTestCapsule(GetPedBoneCoords(npc, 63931, 0.0, 0.0, -0.3), GetPedBoneCoords(npc, 63931, 0.0, 0.0, 0.3), hitboxSize, 16, npc, 4)
-    local _, hitLeftLeg, endCoordsLeftLeg, _, _ = GetShapeTestResult(shapeTestLeftLeg)
-    if hitLeftLeg and endCoordsLeftLeg then
-        ApplyDamageToPed(npc, 5, true)
-        LogHit("Left Leg", endCoordsLeftLeg)
-    end
-
-    local shapeTestRightLeg = StartShapeTestCapsule(GetPedBoneCoords(npc, 51826, 0.0, 0.0, -0.3), GetPedBoneCoords(npc, 51826, 0.0, 0.0, 0.3), hitboxSize, 16, npc, 4)
-    local _, hitRightLeg, endCoordsRightLeg, _, _ = GetShapeTestResult(shapeTestRightLeg)
-    if hitRightLeg and endCoordsRightLeg then
-        ApplyDamageToPed(npc, 5, true)
-        LogHit("Right Leg", endCoordsRightLeg)
+        if hit and endCoords then
+            ApplyDamageToPed(npc, damage, true)
+            LogHit(boneName, endCoords, damage)
+        end
     end
 end
 
 local hitData = {}
 
-function LogHit(bone, coords)
+function LogHit(bone, coords, damage)
     local playerPed = PlayerPedId()
-    local weapon = GetSelectedPedWeapon(playerPed)
-    local weaponName = GetLabelText(GetDisplayNameFromVehicleModel(weapon))
+    local weapon = exports.ox_inventory:GetSlotByItemId(GetPlayerInv(playerPed), 'weapon')
+    local weaponName = weapon.label
+    local distance = GetDistanceBetweenCoords(GetEntityCoords(playerPed), coords)
     local data = {
         bone = bone,
         coords = coords,
         weapon = weaponName,
+        damage = damage,
+        distance = distance,
         timestamp = os.time()
     }
     table.insert(hitData, data)
-    print(string.format("Hit on %s at coords %s with weapon %s", bone, coords, weaponName))
+    print(string.format("Hit on %s at coords %s with weapon %s for %s damage at a distance of %s", bone, coords, weaponName, damage, distance))
 end
 
-RegisterCommand('exporthitdata', function()
+RegisterCommand('exportstats', function()
     local file = io.open("hitdata.txt", "w")
     if file then
         for _, data in ipairs(hitData) do
-            file:write(string.format("Timestamp: %s, Bone: %s, Coords: %s, Weapon: %s\n", data.timestamp, data.bone, data.coords, data.weapon))
+            file:write(string.format("Timestamp: %s, Bone: %s, Coords: %s, Weapon: %s, Damage: %s, Distance: %s\n", data.timestamp, data.bone, data.coords, data.weapon, data.damage, data.distance))
         end
         io.close(file)
-        TriggerEvent('chat:addMessage', {
-            color = { 0, 255, 0 },
-            multiline = true,
-            args = { 'Trefferdaten exportiert.' }
+        lib.notify({
+            title = 'Hit-Daten',
+            description = 'Daten exportiert.',
+            type = 'success'
         })
     else
-        TriggerEvent('chat:addMessage', {
-            color = { 255, 0, 0 },
-            multiline = true,
-            args = { 'Fehler beim Exportieren der Trefferdaten.' }
+        lib.notify({
+            title = 'Hit-Daten',
+            description = 'Fehler beim Exportieren.',
+            type = 'error'
         })
+    end
+end, false)
+
+RegisterCommand('showstats', function()
+    for _, data in ipairs(hitData) do
+        print(string.format("Timestamp: %s, Bone: %s, Coords: %s, Weapon: %s, Damage: %s, Distance: %s", data.timestamp, data.bone, data.coords, data.weapon, data.damage, data.distance))
     end
 end, false)
 
@@ -224,16 +210,16 @@ RegisterCommand('revivenpc', function()
         SetEntityHealth(npc, 100)
         SetPedToRagdoll(npc, 1000, 1000, 0, 0, 0, 0)
         ClearPedTasksImmediately(npc)
-        TriggerEvent('chat:addMessage', {
-            color = { 0, 255, 0 },
-            multiline = true,
-            args = { 'NPC wiederbelebt.' }
+        lib.notify({
+            title = 'NPC',
+            description = 'Wiederbelebt.',
+            type = 'success'
         })
     else
-        TriggerEvent('chat:addMessage', {
-            color = { 255, 0, 0 },
-            multiline = true,
-            args = { 'NPC nicht gefunden oder nicht tot.' }
+        lib.notify({
+            title = 'NPC',
+            description = 'Nicht gefunden oder nicht tot.',
+            type = 'error'
         })
     end
 end, false)
