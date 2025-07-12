@@ -1,15 +1,6 @@
 --[[
-
-    Custom Weapon Sync Script by Jules
-
-    This script provides a custom weapon sync system for FiveM.
-    It includes a spawnable NPC for testing purposes, a custom damage system,
-    a hitbox system, and a health bar.
-
-]]
-
 --================================================================================================
--- Variables
+-- Main
 --================================================================================================
 
 local npcNetId = nil
@@ -18,14 +9,9 @@ local npcNetId = nil
 -- Commands
 --================================================================================================
 
--- Command to spawn the NPC
 RegisterCommand('spawnnpc', function(source, args, rawCommand)
     if npcNetId then
-        TriggerClientEvent('chat:addMessage', source, {
-            color = { 255, 0, 0 },
-            multiline = true,
-            args = { 'NPC ist bereits gespawnt.' }
-        })
+        SendMessage(source, "NPC ist bereits gespawnt.", { 255, 0, 0 })
         return
     end
 
@@ -34,7 +20,6 @@ RegisterCommand('spawnnpc', function(source, args, rawCommand)
     local coords = GetEntityCoords(playerPed)
     local heading = GetEntityHeading(playerPed)
 
-    -- Create the NPC
     local npc = CreatePed(4, `mp_m_freemode_01`, coords.x, coords.y, coords.z, heading, true, true)
     npcNetId = NetworkGetNetworkIdFromEntity(npc)
     SetCanAttackFriendly(npc, true, true)
@@ -42,22 +27,12 @@ RegisterCommand('spawnnpc', function(source, args, rawCommand)
     SetPedCanRagdoll(npc, false)
 
     TriggerClientEvent('spawnNpcPlayer', -1, npcNetId)
-
-    TriggerClientEvent('chat:addMessage', -1, {
-        color = { 0, 255, 0 },
-        multiline = true,
-        args = { 'NPC gespawnt.' }
-    })
+    SendMessage(-1, "NPC gespawnt.", { 0, 255, 0 })
 end, false)
 
--- Command to delete the NPC
 RegisterCommand('deletenpc', function(source, args, rawCommand)
     if not npcNetId then
-        TriggerClientEvent('chat:addMessage', source, {
-            color = { 255, 0, 0 },
-            multiline = true,
-            args = { 'Kein NPC zum Löschen vorhanden.' }
-        })
+        SendMessage(source, "Kein NPC zum Löschen vorhanden.", { 255, 0, 0 })
         return
     end
 
@@ -67,19 +42,26 @@ RegisterCommand('deletenpc', function(source, args, rawCommand)
     end
     npcNetId = nil
 
-    TriggerClientEvent('chat:addMessage', -1, {
-        color = { 0, 255, 0 },
-        multiline = true,
-        args = { 'NPC gelöscht.' }
-    })
+    SendMessage(-1, "NPC gelöscht.", { 0, 255, 0 })
 end, false)
 
 --================================================================================================
 -- Events
 --================================================================================================
 
--- Event to send the NPC network ID to the client
 RegisterNetEvent('getNpcNetId')
 AddEventHandler('getNpcNetId', function()
     TriggerClientEvent('npcNetId', source, npcNetId)
 end)
+
+--================================================================================================
+-- Functions
+--================================================================================================
+
+function SendMessage(target, message, color)
+    TriggerClientEvent('chat:addMessage', target, {
+        color = color,
+        multiline = true,
+        args = { message }
+    })
+end
