@@ -5,6 +5,8 @@ author 'Dein Name'
 description 'Verbessertes Waffen-Feedback und Hitbox-Skript'
 version '1.0.0'
 
+shared_script 'config.lua'
+
 client_scripts {
     'client.lua'
 }
