@@ -84,12 +84,17 @@ end)
 
 AddEventHandler('entityDamaged', function(entity, attacker, damage, weapon)
     if entity == npc then
-        local health = GetEntityHealth(entity)
-        local newHealth = health - damage
-        if newHealth <= 0 then
-            SetEntityHealth(entity, 0)
+        local _, bone = GetPedLastDamageBone(entity)
+        if bone == 31086 then -- SKEL_Head
+            local health = GetEntityHealth(entity)
+            local newHealth = health - damage
+            if newHealth <= 0 then
+                SetEntityHealth(entity, 0)
+            else
+                SetEntityHealth(entity, newHealth)
+            end
         else
-            SetEntityHealth(entity, newHealth)
+            SetEntityHealth(entity, GetEntityHealth(entity) + 1)
         end
     end
 end)
