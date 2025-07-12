@@ -79,7 +79,6 @@ Citizen.CreateThread(function()
     while true do
         Citizen.Wait(0)
         SetPlayerHealthRechargeMultiplier(PlayerId(), 0.0)
-        DisplayDamage(false)
 
         if npc and DoesEntityExist(npc) and not IsPedDeadOrDying(npc, 1) then
             local npcPos = GetEntityCoords(npc)
