@@ -4,6 +4,7 @@ local showHitbox = false
 RegisterNetEvent('spawnNpcPlayer')
 AddEventHandler('spawnNpcPlayer', function(npcNetId)
     npc = NetToPed(npcNetId)
+    SetNetworkIdExistsOnAllMachines(npcNetId, true)
     RequestModel(GetHashKey("mp_m_freemode_01"))
     while not HasModelLoaded(GetHashKey("mp_m_freemode_01")) do
         Citizen.Wait(1)
