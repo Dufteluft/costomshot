@@ -81,22 +81,16 @@ Citizen.CreateThread(function()
         SetPlayerHealthRechargeMultiplier(PlayerId(), 0.0)
 
         if npc and DoesEntityExist(npc) and not IsPedDeadOrDying(npc, 1) then
-            local npcPos = GetEntityCoords(npc)
-            local playerPos = GetEntityCoords(PlayerPedId())
-
-            if #(npcPos - playerPos) < 50.0 then
-                local hit, _, endCoords, _, _ = GetProjectileImpact(npcPos, 50.0, PlayerPedId())
-                if hit then
-                    local headPos = GetPedBoneCoords(npc, 31086, 0.0, 0.0, 0.0)
-                    if #(endCoords - headPos) < 0.2 then
-                        local health = GetEntityHealth(npc)
-                        local newHealth = health - 25
-                        if newHealth <= 0 then
-                            SetEntityHealth(npc, 0)
-                        else
-                            SetEntityHealth(npc, newHealth)
-                        end
-                    end
+            local headPos = GetPedBoneCoords(npc, 31086, 0.0, 0.0, 0.0)
+            local shapeTest = StartShapeTestCapsule(headPos.x, headPos.y, headPos.z, headPos.x, headPos.y, headPos.z + 0.2, 0.2, 16, npc, 4)
+            local _, hit, endCoords, _, _ = GetShapeTestResult(shapeTest)
+            if hit and endCoords then
+                local health = GetEntityHealth(npc)
+                local newHealth = health - 25
+                if newHealth <= 0 then
+                    SetEntityHealth(npc, 0)
+                else
+                    SetEntityHealth(npc, newHealth)
                 end
             end
         end
