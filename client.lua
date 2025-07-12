@@ -49,7 +49,7 @@ AddEventHandler('spawnNpcPlayer', function()
     SetEntityAsMissionEntity(npc, true, true)
     SetPedSeeingRange(npc, 0.0)
     SetPedHearingRange(npc, 0.0)
-    SetEntityInvincible(npc, false)
+    SetEntityInvincible(npc, true)
     TaskSetBlockingOfNonTemporaryEvents(npc, true)
     SetPedDefaultComponentVariation(npc)
 end)
@@ -79,22 +79,27 @@ Citizen.CreateThread(function()
     while true do
         Citizen.Wait(0)
         SetPlayerHealthRechargeMultiplier(PlayerId(), 0.0)
-    end
-end)
+        DisplayDamage(false)
 
-AddEventHandler('entityDamaged', function(entity, attacker, damage, weapon)
-    if entity == npc then
-        local _, bone = GetPedLastDamageBone(entity)
-        if bone == 31086 then -- SKEL_Head
-            local health = GetEntityHealth(entity)
-            local newHealth = health - damage
-            if newHealth <= 0 then
-                SetEntityHealth(entity, 0)
-            else
-                SetEntityHealth(entity, newHealth)
+        if npc and DoesEntityExist(npc) and not IsPedDeadOrDying(npc, 1) then
+            local npcPos = GetEntityCoords(npc)
+            local playerPos = GetEntityCoords(PlayerPedId())
+
+            if #(npcPos - playerPos) < 50.0 then
+                local hit, _, endCoords, _, _ = GetProjectileImpact(npcPos, 50.0, PlayerPedId())
+                if hit then
+                    local headPos = GetPedBoneCoords(npc, 31086, 0.0, 0.0, 0.0)
+                    if #(endCoords - headPos) < 0.2 then
+                        local health = GetEntityHealth(npc)
+                        local newHealth = health - 25
+                        if newHealth <= 0 then
+                            SetEntityHealth(npc, 0)
+                        else
+                            SetEntityHealth(npc, newHealth)
+                        end
+                    end
+                end
             end
-        else
-            SetEntityHealth(entity, GetEntityHealth(entity) + 1)
         end
     end
 end)
