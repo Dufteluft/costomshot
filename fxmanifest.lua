@@ -1,5 +1,6 @@
 fx_version 'cerulean'
 game 'gta5'
+lua54 'yes'
 
 author 'Dein Name'
 description 'Verbessertes Waffen-Feedback und Hitbox-Skript'
