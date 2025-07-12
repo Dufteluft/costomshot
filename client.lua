@@ -84,6 +84,12 @@ end)
 
 AddEventHandler('entityDamaged', function(entity, attacker, damage, weapon)
     if entity == npc then
-        -- This is our NPC, let's do something
+        local health = GetEntityHealth(entity)
+        local newHealth = health - damage
+        if newHealth <= 0 then
+            SetEntityHealth(entity, 0)
+        else
+            SetEntityHealth(entity, newHealth)
+        end
     end
 end)
